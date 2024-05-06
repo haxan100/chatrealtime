@@ -136,11 +136,23 @@
 
             socket.on('user joined', function(username) {
                 displayNotification(username + ' joined the chat');
+                playNotificationSoundUserBaru('userBaru');
+
             });
+            var pesanNotif = new Audio('https://cdn.pixabay.com/audio/2023/12/09/audio_37d2c0e795.mp3'); // Ganti 'notification.mp3' dengan path file audio notifikasi Anda
+            var userBaru = new Audio('https://cdn.pixabay.com/audio/2024/03/31/audio_00c75a25d1.mp3'); // Ganti 'notification.mp3' dengan path file audio notifikasi Anda
+
+            function playNotificationSound() {
+                pesanNotif.play();
+            }
+            function playNotificationSoundUserBaru() {               
+                userBaru.play();
+            }
 
             socket.on('chat message', function(data) {
                 addMessageToList(data);
                 scrollChatToBottom();
+                playNotificationSound();
             });
         }
 
@@ -177,6 +189,7 @@
                 notification.textContent = '';
             }, 3000);
         }
+        
     </script>
 </body>
 </html>
