@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chat App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        #container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        #header {
+            padding: 20px;
+            background-color: #007bff;
+            color: #fff;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        #chatBox {
+            height: 300px;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .message-wrapper {
+            margin-bottom: 10px;
+            overflow: hidden;
+            clear: both;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 70%;
+            word-wrap: break-word;
+            margin: 5px;
+            float: right;
+            background-color: #dcf8c6; /* Background color for messages sent by the user */
+        }
+        .other-message {
+            float: left;
+            background-color: #fff; /* Background color for messages received from other users */
+        }
+        .message p {
+            margin: 0;
+        }
+        .notification {
+            text-align: center;
+            color: #666;
+        }
+        #inputBox {
+            padding: 20px;
+            background-color: #f4f4f4;
+            border-top: 1px solid #ddd;
+        }
+        #inputBox textarea {
+            width: calc(100% - 40px);
+            height: 60px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: none;
+        }
+        #inputBox button {
+            width: 100px;
+            height: 40px;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #inputBox button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="header">
+            <h1>Real-Time Chat App</h1>
+        </div>
+
+        <div id="chatBox">
+            <div id="notification" class="notification"></div>
+            <div id="messages"></div>
+        </div>
+
+        <div id="inputBox">
+            <textarea id="input" placeholder="Type your message..."></textarea>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket;
+        var username;
+
+        window.onload = function() {
+            var usernameInput = prompt("Please enter your username:");
+            if (usernameInput !== null && usernameInput.trim() !== '') {
+                username = usernameInput.trim();
+                initChat();
+            } else {
+                alert("Username cannot be empty!");
+                window.location.reload();
+            }
+        };
+
+        function initChat() {
+            socket = io();
+
+            socket.emit('new user', username);
+
+            var input = document.getElementById('input');
+
+            input.addEventListener('keydown', function(e) {
+                if (!e.shiftKey && e.keyCode === 13) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            socket.on('user joined', function(username) {
+                displayNotification(username + ' joined the chat');
+            });
+
+            socket.on('chat message', function(data) {
+                addMessageToList(data);
+                scrollChatToBottom();
+            });
+        }
+
+        function sendMessage() {
+            var input = document.getElementById('input').value.trim();
+            if (input !== '') {
+                socket.emit('chat message', { sender: username, message: input });
+                document.getElementById('input').value = '';
+                scrollChatToBottom();
+            }
+        }
+
+        function addMessageToList(data) {
+            var messages = document.getElementById('messages');
+            var messageWrapper = document.createElement('div');
+            var messageContent = document.createElement('div');
+            messageWrapper.classList.add('message-wrapper');
+            messageContent.classList.add('message');
+            messageContent.classList.add(data.sender === username ? 'me' : 'other-message');
+            messageContent.innerHTML = `<p><strong>${data.sender}</strong>: ${data.message}</p>`;
+            messageWrapper.appendChild(messageContent);
+            messages.appendChild(messageWrapper);
+        }
+
+        function scrollChatToBottom() {
+            var chatBox = document.getElementById('chatBox');
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function displayNotification(message) {
+            var notification = document.getElementById('notification');
+            notification.textContent = message;
+            setTimeout(function() {
+                notification.textContent = '';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
